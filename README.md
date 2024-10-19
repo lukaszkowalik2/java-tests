@@ -1,20 +1,24 @@
-# Java Tests
+# Java Assignments - Test Suite
 
-## Project Structure
+## Overview
 
-- **src/**: Contains all source code files.
-- **test/**: Contains unit tests to ensure the correctness of implemented operations.
+This repository contains test cases for various Java assignments. You need to add these tests to your own Java project to verify your implementations. The repository provides only the test suite, so the actual functionality must be implemented by you.
 
-## How to Run Tests
+## Instructions
 
-To run the tests in IntelliJ IDEA:
+1. **Integrate Tests into Your Project**:
+   - Clone or download this repository.
+   - Copy the `test/` directory into your Java project in IntelliJ IDEA.
 
-1. Right-click on the `test/` directory or a specific test class.
-2. Select **Run 'All Tests'** from the context menu.
-3. Alternatively, you can click the green play icon next to a test method or class to run specific tests.
+2. **Run Tests in IntelliJ IDEA**:
+   - Right-click on the `test/` directory or a specific test class.
+   - Select **Run 'All Tests'** to execute all tests and check your implementations.
+   - You can also run individual test methods by clicking the green play icon next to them.
+   - For detailed guidance on running tests in IntelliJ IDEA, refer to this [YouTube tutorial](https://www.youtube.com/watch?v=Zi67qUHbq-c).
 
-For more detailed instructions, you can refer to this [YouTube tutorial](https://www.youtube.com/watch?v=Zi67qUHbq-c).
+## Notes
 
-## Contributing
+- Ensure that your project contains the necessary implementations in the `src/` directory to pass the provided tests.
+- If a test fails, review your code and make corrections until all tests pass.
 
-If you find any issues or have ideas for improvements, please create an issue or submit a pull request. Your contributions are always welcome!
+If you encounter any issues or have suggestions for improvements, feel free to create an issue or submit a pull request!
