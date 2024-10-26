@@ -9,6 +9,7 @@ This repository contains test cases for various Java assignments. You need to ad
 1. **Integrate Tests into Your Project**:
    - Clone or download this repository.
    - Copy the `test/` directory into your Java project in IntelliJ IDEA.
+   - You can paste your code into the assignment file and run the test file with the suffix *Test.java.
 
 2. **Run Tests in IntelliJ IDEA**:
    - Right-click on the `test/` directory or a specific test class.
