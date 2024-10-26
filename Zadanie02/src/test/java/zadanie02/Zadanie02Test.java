@@ -852,4 +852,53 @@ public class Zadanie02Test {
         );
         assertEquals(expected, result);
     }
+
+    @Test
+    void testAddingMaxLength() {
+        List<Integer> result = zadanie.code(15, 16383, "+", -16383);
+        List<Integer> expected = Arrays.asList(
+                1, 1, 1, 1, // 15
+                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1, // 16383
+                0, 0,       // +
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1 // -16383
+        );
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testSubMaxLength() {
+        List<Integer> result = zadanie.code(15, 16383, "-", -16383);
+        List<Integer> expected = Arrays.asList(
+                1, 1, 1, 1, // 15
+                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1, // 16383
+                0, 1,       // -
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1 // -16383
+        );
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testMultiMaxLength() {
+        List<Integer> result = zadanie.code(15, 16383, "*", -16383);
+        List<Integer> expected = Arrays.asList(
+                1, 1, 1, 1, // 15
+                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1, // 16383
+                1, 0,       // *
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1 // -16383
+        );
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testDiviMaxLength() {
+        List<Integer> result = zadanie.code(15, 16383, "/", -16383);
+        List<Integer> expected = Arrays.asList(
+                1, 1, 1, 1, // 15
+                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1, // 16383
+                1, 1,       // /
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 ,1 ,1, 1 // -16383
+        );
+        assertEquals(expected, result);
+    }
+
 }
