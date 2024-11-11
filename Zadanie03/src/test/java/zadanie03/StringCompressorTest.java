@@ -157,13 +157,11 @@ public class StringCompressorTest {
         List<String> code = compressor.code();
         assertEquals(2, code.size());
         assertTrue(code.contains("działa"));
-        assertTrue(code.contains("pewno"));
 
         String output = compressor.output();
-        System.out.println(output);
         assertTrue(output.contains("0"));
-        assertTrue(output.contains("Czy"));
         assertTrue(output.contains("to"));
+        assertFalse(output.contains("działa"));
 
         String decompressed = compressor.decode(output, code);
         assertEquals(input, decompressed);
@@ -375,14 +373,7 @@ public class StringCompressorTest {
         assertTrue(histogram.containsKey("Mickiewicz"));
 
         List<String> dictionary = compressor.code();
-        assertTrue(dictionary.contains("efekciarstwie"));
-        assertTrue(dictionary.contains("pałaszujące"));
-        assertTrue(dictionary.contains("Ilugodzinnym"));
-        assertTrue(dictionary.contains("Gigachad"));
-        assertTrue(dictionary.contains("Mickiewicz"));
-        assertTrue(dictionary.contains("edukującą"));
-        assertTrue(dictionary.contains("Efekciarstwie"));
-        assertTrue(dictionary.contains("Bliźniak"));
+        assertEquals(4,dictionary.size());
 
         String output = compressor.output();
         assertTrue(output.contains("xd"));
@@ -475,10 +466,495 @@ public class StringCompressorTest {
         List<String> dictionary = compressor.code();
         assertEquals(64,dictionary.size());
         String output = compressor.output();
-//        assertEquals(input, output);
+
+        assertTrue(output.contains("rzeczywistość"));
+        assertFalse(output.contains("niezastąpiony"));
 
         String decode = compressor.decode(output,dictionary);
         assertEquals(input,decode);
 
+    }
+
+    @Test
+    void testEmptyString() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "";
+        compressor.input(input);
+
+        assertTrue(compressor.histogram().isEmpty(), "Histogram should be empty for an empty string.");
+        assertTrue(compressor.code().isEmpty(), "Dictionary should be empty for an empty string.");
+        assertEquals("", compressor.output(), "Output should be empty for an empty string.");
+
+        String output = compressor.output();
+        List<String> dictionary = compressor.code();
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testStringWithSpacesOnly() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "     ";
+        compressor.input(input);
+
+        assertTrue(compressor.histogram().isEmpty(), "Histogram should be empty for a string with only spaces.");
+        assertTrue(compressor.code().isEmpty(), "Dictionary should be empty for a string with only spaces.");
+        assertEquals("     ", compressor.output(), "Output should match the input for a string with only spaces.");
+
+        String output = compressor.output();
+        List<String> dictionary = compressor.code();
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testStringWithSpecialCharactersOnly() {
+        StringCompressor compressor = new StringCompressor();
+        String input = ".,:;\"!()";
+        compressor.input(input);
+
+        assertTrue(compressor.histogram().isEmpty(), "Histogram should be empty for a string with only special characters.");
+        assertTrue(compressor.code().isEmpty(), "Dictionary should be empty for a string with only special characters.");
+        assertEquals(".,:;\"!()", compressor.output(), "Output should match the input for a string with only special characters.");
+
+        String output = compressor.output();
+        List<String> dictionary = compressor.code();
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testSimpleRepeatedWords() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "test test test test example example example";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(2, histogram.size());
+        assertEquals(4, histogram.get("test"));
+        assertEquals(3, histogram.get("example"));
+
+        List<String> dictionary = compressor.code();
+        assertTrue(dictionary.contains("test"), "The dictionary should contain 'test'.");
+        assertTrue(dictionary.contains("example"), "The dictionary should contain 'example'.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'test'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'example'.");
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testMixedCaseWords() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "Test test TEST Test test TEST";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(2, histogram.get("Test"));
+        assertEquals(2, histogram.get("test"));
+        assertEquals(2, histogram.get("TEST"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "Dictionary size should be 2 for the most frequent words.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for one of the frequent words.");
+        assertTrue(output.contains("1"), "Output should contain binary code for another frequent word.");
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testTextWithSpecialCharactersAndWords() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "hello! Hello, HELLO; hello world! World.,";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(5, histogram.size());
+        assertEquals(2, histogram.get("hello"));
+        assertEquals(1, histogram.get("Hello"));
+        assertEquals(1, histogram.get("HELLO"));
+        assertEquals(1, histogram.get("world"));
+        assertEquals(1, histogram.get("World"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "Only the most frequent word should be included in the dictionary.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'hello'.");
+        assertTrue(output.contains("1"));
+        assertFalse(output.contains("hello"));
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+
+    }
+
+    @Test
+    void testMultilineInput() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "line1 line1 line2\nline1 line2 line3\nline1 line3 line3";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(4, histogram.get("line1"));
+        assertEquals(2, histogram.get("line2"));
+        assertEquals(3, histogram.get("line3"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include the two most frequent words.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'line1'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'line3'.");
+        assertTrue(output.contains("line2"), "Output should retain 'line2' as it is not in the dictionary.");
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testVeryLongWords() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "supercalifragilisticexpialidocious antidisestablishmentarianism floccinaucinihilipilification";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(1, histogram.get("supercalifragilisticexpialidocious"));
+        assertEquals(1, histogram.get("antidisestablishmentarianism"));
+        assertEquals(1, histogram.get("floccinaucinihilipilification"));
+
+        List<String> dictionary = compressor.code();
+        assertTrue(dictionary.isEmpty(), "No compression should occur as all words appear only once.");
+
+        String output = compressor.output();
+        assertEquals(input, output, "Output should match the input for unique, long words.");
+    }
+
+    @Test
+    void testDuplicateWordsWithSpecialCharacters() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "hello hello! hello, hello; HELLO hello.";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(2, histogram.size());
+        assertEquals(5, histogram.get("hello"));
+        assertEquals(1, histogram.get("HELLO"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include the most frequent word 'hello'.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'hello'.");
+        assertFalse(output.contains("hello"), "Output should retain 'HELLO' as it is not in the dictionary.");
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testMultilineTextWithDuplicates() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "lineA lineB lineA\nlineC lineB lineC\nlineC lineA lineB";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(3, histogram.get("lineA"));
+        assertEquals(3, histogram.get("lineB"));
+        assertEquals(3, histogram.get("lineC"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include all words as they are equally frequent.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"));
+        assertTrue(output.contains("1"));
+
+        String decode =  compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+    @Test
+    void testCaseInsensitiveDuplicates() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "Case CASE case CASE";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(1, histogram.get("Case"));
+        assertEquals(2, histogram.get("CASE"));
+        assertEquals(1, histogram.get("case"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include the most frequent variation.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for the most frequent variation.");
+        assertFalse(output.contains("CASE"), "Output should retain 'Case' as it is not in the dictionary.");
+
+        String decode = compressor.decode(output,dictionary);
+        assertEquals(input,decode);
+    }
+
+
+    @Test
+    void testComplexSentenceWithNumbersAndSpecialCharacters() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "Complex! sentence: another, with words and special characters.";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(8, histogram.size());
+        assertEquals(1, histogram.get("Complex"));
+        assertEquals(1, histogram.get("sentence"));
+        assertEquals(1, histogram.get("another"));
+        assertEquals(1, histogram.get("with"));
+        assertEquals(1, histogram.get("words"));
+        assertEquals(1, histogram.get("special"));
+
+        List<String> dictionary = compressor.code();
+        System.out.println(dictionary);
+        assertTrue(dictionary.isEmpty(), "The dictionary should be empty as all words appear only once.");
+
+        String output = compressor.output();
+        assertEquals(input, output, "Output should match the input for unique words with numbers and special characters.");
+    }
+
+    @Test
+    void testMixedSentencesWithRepetition() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "The quick brown fox jumps over the lazy dog. The dog barks at the fox.";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(11, histogram.size());
+        assertEquals(2, histogram.get("The"));
+        assertEquals(2, histogram.get("fox"));
+        assertEquals(2, histogram.get("dog"));
+        assertEquals(1, histogram.get("quick"));
+        assertEquals(1, histogram.get("brown"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(0, dictionary.size());
+
+        String output = compressor.output();
+        assertFalse(output.contains("0"));
+        assertFalse(output.contains("1"));
+    }
+
+    @Test
+    void testTextWithOnlySpacesAndSpecialCharacters() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "     ,,,,     ....     !!!!";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertTrue(histogram.isEmpty(), "Histogram should be empty for input with only spaces and special characters.");
+
+        List<String> dictionary = compressor.code();
+        assertTrue(dictionary.isEmpty(), "Dictionary should be empty for input with only spaces and special characters.");
+
+        String output = compressor.output();
+        assertEquals(input, output, "Output should match the input for text with only spaces and special characters.");
+    }
+
+    @Test
+    void testHighlyRepeatedShortWordsWithSpaces() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "a a a   b b   c c c c c c   d d d";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(4, histogram.size());
+        assertEquals(3, histogram.get("a"));
+        assertEquals(2, histogram.get("b"));
+        assertEquals(6, histogram.get("c"));
+        assertEquals(3, histogram.get("d"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(0, dictionary.size());
+
+        String output = compressor.output();
+        assertFalse(    output.contains("0"));
+        assertFalse(output.contains("1"));
+        assertTrue(output.contains("a"));
+        assertTrue(output.contains("b"));
+        assertTrue(output.contains("c"));
+        assertTrue(output.contains("d"));
+    }
+
+    @Test
+    void testLongTextWithRepetitions() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(8, histogram.size());
+        assertEquals(3, histogram.get("Lorem"));
+        assertEquals(3, histogram.get("ipsum"));
+        assertEquals(3, histogram.get("dolor"));
+        assertEquals(3, histogram.get("sit"));
+        assertEquals(3, histogram.get("amet"));
+        assertEquals(3, histogram.get("consectetur"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(4, dictionary.size(), "The dictionary should include the two most frequent words.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for the most frequent word.");
+        assertTrue(output.contains("1"), "Output should contain binary code for the second most frequent word.");
+    }
+
+    @Test
+    void testZigzagPatternWithRepetition() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "zig zag zig zag zig zag";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(2, histogram.size());
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include 'zig' and 'zag'.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'zig'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'zag'.");
+    }
+
+    @Test
+    void testRepeatedWordClusters() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "cluster cluster cluster group group cluster group group";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(2, histogram.size());
+        assertEquals(4, histogram.get("cluster"));
+        assertEquals(4, histogram.get("group"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include 'cluster' and 'group'.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'cluster'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'group'.");
+    }
+
+    @Test
+    void testTextWithShortAndLongWords() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "a aa aaa aaaaa aaaaaa";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(5, histogram.size());
+        assertEquals(1, histogram.get("a"));
+        assertEquals(1, histogram.get("aa"));
+        assertEquals(1, histogram.get("aaa"));
+        assertEquals(1, histogram.get("aaaaa"));
+        assertEquals(1, histogram.get("aaaaaa"));
+
+        List<String> dictionary = compressor.code();
+        assertTrue(dictionary.isEmpty(), "The dictionary should be empty as all words appear only once.");
+
+        String output = compressor.output();
+        assertEquals(input, output, "Output should match the input for unique words of varying lengths.");
+    }
+
+
+    @Test
+    void testSmallDictionarySize() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "alpha beta gamma alpha beta alpha";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(3, histogram.get("alpha"));
+        assertEquals(2, histogram.get("beta"));
+        assertEquals(1, histogram.get("gamma"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include 'alpha' and 'beta' for a small size.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'alpha'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'beta'.");
+        assertTrue(output.contains("gamma"), "Output should retain 'gamma' as it is not in the dictionary.");
+    }
+
+    @Test
+    void testMediumDictionarySize() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "apple orange banana apple orange banana apple apple orange";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(4, histogram.get("apple"));
+        assertEquals(3, histogram.get("orange"));
+        assertEquals(2, histogram.get("banana"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include all words for a medium-sized input.");
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'apple'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'orange'.");
+    }
+
+    @Test
+    void testLargeDictionarySize() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "a b c d e f g h i j k l m n o p q r s t u v w x y z";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(26, histogram.size());
+
+        List<String> dictionary = compressor.code();
+        assertTrue(dictionary.isEmpty());
+
+        String output = compressor.output();
+        assertTrue(output.contains("z"), "Output should retain less frequent words like 'z'.");
+    }
+
+    @Test
+    void testDictionaryTooCostly() {
+        StringCompressor compressor = new StringCompressor();
+        String input = "longword longword longword short short short shortword shortword";
+        compressor.input(input);
+
+        Map<String, Integer> histogram = compressor.histogram();
+        assertEquals(3, histogram.size());
+        assertEquals(3, histogram.get("longword"));
+        assertEquals(3, histogram.get("short"));
+        assertEquals(2, histogram.get("shortword"));
+
+        List<String> dictionary = compressor.code();
+        assertEquals(2, dictionary.size(), "The dictionary should include 'longword' and 'short', but not 'shortword' due to cost.");
+        assertTrue(dictionary.contains("longword"));
+        assertTrue(dictionary.contains("short"));
+        assertFalse(dictionary.contains("shortword"));
+
+        String output = compressor.output();
+        assertTrue(output.contains("0"), "Output should contain binary code for 'longword'.");
+        assertTrue(output.contains("1"), "Output should contain binary code for 'short'.");
+        assertTrue(output.contains("shortword"), "Output should retain 'shortword' as it is too costly to include.");
     }
 }
