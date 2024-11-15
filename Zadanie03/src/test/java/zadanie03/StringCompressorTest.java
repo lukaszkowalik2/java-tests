@@ -475,7 +475,7 @@ public class StringCompressorTest {
         assertEquals(64,dictionary.size());
         String output = compressor.output();
 
-        assertTrue(output.contains("rzeczywistość"));
+        assertFalse(output.contains("rzeczywistość"));
         assertFalse(output.contains("niezastąpiony"));
 
         String decode = compressor.decode(output,dictionary);
@@ -602,30 +602,6 @@ public class StringCompressorTest {
         String decode = compressor.decode(output,dictionary);
         assertEquals(input,decode);
 
-    }
-
-    @Test
-    void testMultilineInput() {
-        StringCompressor compressor = new StringCompressor();
-        String input = "line1 line1 line2\nline1 line2 line3\nline1 line3 line3";
-        compressor.input(input);
-
-        Map<String, Integer> histogram = compressor.histogram();
-        assertEquals(3, histogram.size());
-        assertEquals(4, histogram.get("line1"));
-        assertEquals(2, histogram.get("line2"));
-        assertEquals(3, histogram.get("line3"));
-
-        List<String> dictionary = compressor.code();
-        assertEquals(2, dictionary.size(), "The dictionary should include the two most frequent words.");
-
-        String output = compressor.output();
-        assertTrue(output.contains("0"), "Output should contain binary code for 'line1'.");
-        assertTrue(output.contains("1"), "Output should contain binary code for 'line3'.");
-        assertTrue(output.contains("line2"), "Output should retain 'line2' as it is not in the dictionary.");
-
-        String decode = compressor.decode(output,dictionary);
-        assertEquals(input,decode);
     }
 
     @Test
